@@ -1,17 +1,34 @@
-// Family Chore Tracker – single page, fixed kids, points on DONE
+// Family Chore Tracker – Eva, Henry, Eli with custom chore list
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
     const KIDS = ['Eva', 'Henry', 'Eli'];
 
-    // Default chores (edit freely)
+    // === YOUR CUSTOM CHORE LIST ===
     const DEFAULT_CHORES = [
-      { id: 'make-bed', name: 'Make Bed', points: 5 },
-      { id: 'brush-teeth-am', name: 'Brush Teeth (AM)', points: 2 },
-      { id: 'feed-pets', name: 'Feed Pets', points: 6 },
-      { id: 'water-animals', name: 'Water Animals', points: 6 },
-      { id: 'dishes', name: 'Do Dishes', points: 10 },
-      { id: 'clean-room', name: 'Clean Room', points: 8 },
-      { id: 'trash', name: 'Take Out Trash', points: 6 },
+      { id: 'hygiene-brush-teeth',        type: 'Hygiene',     name: 'Brush Teeth',            points: 1 },
+
+      { id: 'pets-feed-or-water-sully',   type: 'Pets',        name: 'Feed or Water Sully',    points: 1 },
+      { id: 'pets-water-big-chickens',    type: 'Pets',        name: 'Water Big Chickens',     points: 3 },
+      { id: 'pets-feed-big-chickens',     type: 'Pets',        name: 'Feed Big Chickens',      points: 3 },
+      { id: 'pets-water-little-chickens', type: 'Pets',        name: 'Water little Chickens',  points: 3 },
+      { id: 'pets-feed-little-chickens',  type: 'Pets',        name: 'Feed Little Chickens',   points: 3 },
+      { id: 'pets-feed-ducks-geese',      type: 'Pets',        name: 'Feed Ducks/Geese',       points: 3 },
+      { id: 'pets-water-ducks-geese',     type: 'Pets',        name: 'Water Ducks/Geese',      points: 3 },
+      { id: 'pets-clean-chicken-coop',    type: 'Pets',        name: 'Clean Chicken Coop',     points: 10 },
+      { id: 'pets-gather-eggs',           type: 'Pets',        name: 'Gather the Eggs',        points: 1 },
+      { id: 'pets-feed-outdoor-cats',     type: 'Pets',        name: 'Feed Outdoor Cats',      points: 1 },
+      { id: 'pets-feed-indoor-cats',      type: 'Pets',        name: 'Feed Indoor Cats',       points: 1 },
+
+      { id: 'house-put-away-laundry',     type: 'Household',   name: 'Put Away Laundry',       points: 2 },
+      { id: 'school-do-homework',         type: 'School/Sport',name: 'Do Homework',            points: 2 },
+      { id: 'house-clean-room',           type: 'Household',   name: 'Clean Room',             points: 3 },
+      { id: 'house-clean-theater-room',   type: 'Household',   name: 'Clean Theater Room',     points: 2 },
+      { id: 'house-clean-basement',       type: 'Household',   name: 'Clean Basement',         points: 2 },
+      { id: 'house-tidy-front-entrance',  type: 'Household',   name: 'Tidy Front Entrance',    points: 2 },
+      { id: 'house-empty-dishwasher',     type: 'Household',   name: 'Empty Dishwasher',       points: 2 },
+      { id: 'house-gather-dishes',        type: 'Household',   name: 'Gather Dishes',          points: 1 },
+
+      { id: 'sport-do-hockey-shots',      type: 'School/Sport',name: 'Do Hockey Shots',        points: 2 },
     ];
 
     // ----- Persistence -----
@@ -27,10 +44,7 @@
       }
     }
 
-    // State shape
-    // totals: { Eva: 0, Henry: 0, Eli: 0 }
-    // chores: [{ id, name, points, done:false, who:null }]
-    // history: [{ choreId, name, points, ts }]
+    // State
     let totals = load('totals', { Eva: 0, Henry: 0, Eli: 0 });
     let chores = load('chores', seedChores(DEFAULT_CHORES));
     let history = load('history', []);
@@ -39,16 +53,16 @@
       return list.map(c => ({ ...c, done: false, who: null }));
     }
 
-    // UI refs
+    // Elements
     const tbody = document.getElementById('chore-body');
     const resetBtn = document.getElementById('reset-day');
     const undoBtn = document.getElementById('undo-last');
 
-    // Render everything
+    // Render
     renderScoreboard();
     renderChores();
 
-    // Handlers
+    // ---- Event Handlers ----
     resetBtn.addEventListener('click', () => {
       if (!confirm('Reset day: clear all DONE statuses and totals?')) return;
       totals = { Eva: 0, Henry: 0, Eli: 0 };
@@ -73,7 +87,7 @@
       renderChores();
     });
 
-    // Event delegation for DONE buttons and selects
+    // Click handler for DONE buttons
     tbody.addEventListener('click', (e) => {
       const doneBtn = e.target.closest('button[data-action="done"]');
       if (!doneBtn) return;
@@ -99,16 +113,10 @@
 
       persist();
       renderScoreboard();
-      renderChoreRow(row, chore); // re-render this one row
+      renderChoreRow(row, chore); // re-render this row
     });
 
-    tbody.addEventListener('change', (e) => {
-      const sel = e.target.closest('select[data-role="picker"]');
-      if (!sel) return;
-      // No side-effect here; we read the value when DONE is pressed.
-    });
-
-    // ----- Renderers -----
+    // ----- Rendering -----
     function renderScoreboard() {
       KIDS.forEach(kid => {
         const el = document.getElementById('points-' + kid);
@@ -121,18 +129,13 @@
       chores.forEach(chore => {
         const tr = document.createElement('tr');
         tr.dataset.id = chore.id;
-        tr.innerHTML = rowTemplate(chore);
+        tr.innerHTML = rowBodyCells(chore);
         tbody.appendChild(tr);
       });
     }
 
     function renderChoreRow(rowEl, chore) {
       rowEl.innerHTML = rowBodyCells(chore);
-      // keep row’s data-id
-    }
-
-    function rowTemplate(chore) {
-      return rowBodyCells(chore);
     }
 
     function rowBodyCells(chore) {
@@ -143,6 +146,7 @@
         : `<span class="status-chip">Not done</span>`;
 
       return `
+        <td>${escapeHtml(chore.type)}</td>
         <td>${escapeHtml(chore.name)}</td>
         <td>${chore.points}</td>
         <td>${select}</td>
