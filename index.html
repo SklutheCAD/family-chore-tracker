@@ -6,41 +6,57 @@
   <title>Family Chore Tracker</title>
 
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
   <header class="container">
     <h1>Family Chore Tracker</h1>
+    <div id="scoreboard" class="scoreboard">
+      <div class="score" data-kid="Eva">
+        <span class="name">Eva</span>
+        <span class="points" id="points-Eva">0</span>
+      </div>
+      <div class="score" data-kid="Henry">
+        <span class="name">Henry</span>
+        <span class="points" id="points-Henry">0</span>
+      </div>
+      <div class="score" data-kid="Eli">
+        <span class="name">Eli</span>
+        <span class="points" id="points-Eli">0</span>
+      </div>
+    </div>
   </header>
 
   <main class="container">
-    <section id="kids">
-      <h2>Names for the Kids</h2>
-      <div class="button-row">
-        <button class="btn" data-action="add-kid">Add Kid</button>
-        <button class="btn" data-action="remove-kid">Remove Kid</button>
-        <button class="btn" data-action="save-kids">Save Kids</button>
-      </div>
-      <ul id="kid-list"></ul>
+    <section class="controls">
+      <button id="reset-day" class="btn danger">Reset Day</button>
+      <button id="undo-last" class="btn">Undo Last</button>
+      <span class="hint">Pick a name for a chore, then press <strong>DONE</strong>.</span>
     </section>
 
-    <section id="chores">
-      <h2>Chores</h2>
-      <div class="button-row">
-        <button class="btn" data-action="add-chore">Add Chore</button>
-        <button class="btn" data-action="assign-random">Assign Random</button>
-        <button class="btn" data-action="clear-all">Clear All</button>
-      </div>
-      <div id="chore-board"></div>
+    <section>
+      <table class="chore-table" id="chore-table" aria-describedby="chore-help">
+        <thead>
+          <tr>
+            <th>Chore</th>
+            <th>Points</th>
+            <th>Who</th>
+            <th>Action</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="chore-body"><!-- populated by JS --></tbody>
+      </table>
+      <p id="chore-help" class="sr-only">Select a name for a chore, then press Done to award points.</p>
     </section>
   </main>
 
   <footer class="container">
-    <small>Data is saved locally in your browser.</small>
+    <small>Scores and chore status are stored locally on this device.</small>
   </footer>
 
-  <script src="app.js?v=9" defer></script>
-  <!-- TEMP: keep SW disabled while we match visuals
+  <script src="app.js?v=12" defer></script>
+  <!-- Keep service worker disabled while testing
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js');
