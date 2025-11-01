@@ -1,49 +1,127 @@
-// Force a fresh cache when you bump VERSION
-const VERSION = 'v4';
-const CACHE = `chore-cache-${VERSION}`;
+// app.js
+// Minimal working wiring for button clicks + simple localStorage
 
-const ASSETS = [
-  './',
-  './index.html',
-  './styles.css',
-  './app.js?v=4',           // matches the script in index.html
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './favicon.png'
-];
+(function () {
+  // Ensure DOM exists before querying
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Chore Tracker loaded');
 
-// Install: cache app shell
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
-});
+    const kidListEl = document.getElementById('kid-list');
+    const choreBoardEl = document.getElementById('chore-board');
 
-// Activate: clear old caches
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
+    // Local state
+    let kids = load('kids', []);
+    let chores = load('chores', []);
 
-// Fetch: network-first with cache fallback
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  e.respondWith(
-    fetch(req)
-      .then(net => {
-        // Cache same-origin GET requests
-        try {
-          if (req.method === 'GET' && new URL(req.url).origin === location.origin) {
-            const copy = net.clone();
-            caches.open(CACHE).then(c => c.put(req, copy));
-          }
-        } catch {}
-        return net;
-      })
-      .catch(() => caches.match(req).then(res => res || caches.match('./index.html')))
-  );
-});
+    renderKids();
+    renderChores();
+
+    // Event delegation for all buttons with data-action
+    document.body.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+
+      e.preventDefault(); // stops accidental form submits
+      const action = btn.getAttribute('data-action');
+      console.log('Button clicked:', action);
+
+      switch (action) {
+        case 'add-kid':
+          addKid();
+          break;
+        case 'remove-kid':
+          removeKid();
+          break;
+        case 'save-kids':
+          save('kids', kids);
+          alert('Kids saved ✅');
+          break;
+        case 'add-chore':
+          addChore();
+          break;
+        case 'assign-random':
+          assignRandom();
+          break;
+        case 'clear-all':
+          kids = [];
+          chores = [];
+          save('kids', kids);
+          save('chores', chores);
+          renderKids();
+          renderChores();
+          break;
+        default:
+          console.warn('Unknown action:', action);
+      }
+    });
+
+    // --- Helpers ---
+    function addKid() {
+      const name = prompt('Kid name?');
+      if (!name) return;
+      kids.push(name.trim());
+      renderKids();
+    }
+
+    function removeKid() {
+      if (!kids.length) return alert('No kids to remove');
+      const name = prompt(`Remove which kid?\n${kids.join(', ')}`);
+      if (!name) return;
+      kids = kids.filter(k => k.toLowerCase() !== name.trim().toLowerCase());
+      renderKids();
+    }
+
+    function addChore() {
+      const text = prompt('Chore description?');
+      if (!text) return;
+      chores.push({ text: text.trim(), assignedTo: null });
+      save('chores', chores);
+      renderChores();
+    }
+
+    function assignRandom() {
+      if (!kids.length || !chores.length) return alert('Need kids and chores first');
+      chores = chores.map(c => ({ ...c, assignedTo: kids[Math.floor(Math.random() * kids.length)] }));
+      save('chores', chores);
+      renderChores();
+    }
+
+    function renderKids() {
+      save('kids', kids); // persist as you go
+      kidListEl.innerHTML = kids.map(k => `<li>${escapeHtml(k)}</li>`).join('') || '<li><em>No kids added yet</em></li>';
+    }
+
+    function renderChores() {
+      choreBoardEl.innerHTML = chores.length
+        ? chores.map(c => `
+          <div class="chore-card">
+            <div class="chore-text">${escapeHtml(c.text)}</div>
+            <div class="chore-assigned">${c.assignedTo ? 'Assigned to: ' + escapeHtml(c.assignedTo) : '<em>Unassigned</em>'}</div>
+          </div>
+        `).join('')
+        : '<p><em>No chores yet</em></p>';
+    }
+
+    function save(key, value) {
+      localStorage.setItem(`choretracker:${key}`, JSON.stringify(value));
+    }
+
+    function load(key, fallback) {
+      try {
+        const raw = localStorage.getItem(`choretracker:${key}`);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+  });
+})();
