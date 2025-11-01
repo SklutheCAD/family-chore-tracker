@@ -1,5 +1,5 @@
-// Minimal offline cache for PWA shell.
-const CACHE = 'chore-cache-v1';
+// Was: const CACHE = 'chore-cache-v1';
+const CACHE = 'chore-cache-v3';
 const ASSETS = [
 './',
 './index.html',
