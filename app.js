@@ -1,4 +1,4 @@
-// Family Chore Tracker – Eva, Henry, Eli with custom chore list
+// Family Chore Tracker – grouped by Type; multiple claims per day; running totals kept
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
     const KIDS = ['Eva', 'Henry', 'Eli'];
@@ -31,63 +31,58 @@
       { id: 'sport-do-hockey-shots',      type: 'School/Sport',name: 'Do Hockey Shots',        points: 2 },
     ];
 
-    // ----- Persistence -----
-    function save(key, value) {
-      localStorage.setItem('choretracker:' + key, JSON.stringify(value));
-    }
+    // ----- Persistence helpers -----
+    function save(key, value) { localStorage.setItem('choretracker:' + key, JSON.stringify(value)); }
     function load(key, fallback) {
-      try {
-        const raw = localStorage.getItem('choretracker:' + key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch {
-        return fallback;
-      }
+      try { const raw = localStorage.getItem('choretracker:' + key); return raw ? JSON.parse(raw) : fallback; }
+      catch { return fallback; }
     }
 
-    // State
+    // ----- State -----
+    // Running totals (lifetime)
     let totals = load('totals', { Eva: 0, Henry: 0, Eli: 0 });
-    let chores = load('chores', seedChores(DEFAULT_CHORES));
-    let history = load('history', []);
-
-    function seedChores(list) {
-      return list.map(c => ({ ...c, done: false, who: null }));
-    }
+    // Per-day counters for each chore (resets on Reset Day)
+    let dailyCounts = load('dailyCounts', {});          // { [choreId]: number }
+    let dailyLastWho = load('dailyLastWho', {});        // { [choreId]: "Eva" }
+    // History for undo
+    let history = load('history', []);                  // [{ choreId, name, points, ts }]
 
     // Elements
     const tbody = document.getElementById('chore-body');
     const resetBtn = document.getElementById('reset-day');
     const undoBtn = document.getElementById('undo-last');
 
-    // Render
+    // Initial render
     renderScoreboard();
     renderChores();
 
-    // ---- Event Handlers ----
+    // ----- Events -----
     resetBtn.addEventListener('click', () => {
-      if (!confirm('Reset day: clear all DONE statuses and totals?')) return;
-      totals = { Eva: 0, Henry: 0, Eli: 0 };
-      chores = seedChores(DEFAULT_CHORES);
+      if (!confirm('Start a new day? (Keeps totals; clears today’s claims)')) return;
+      dailyCounts = {};
+      dailyLastWho = {};
       history = [];
       persist();
-      renderScoreboard();
       renderChores();
     });
 
     undoBtn.addEventListener('click', () => {
       if (!history.length) return alert('Nothing to undo.');
       const last = history.pop(); // { choreId, name, points }
+      // Refund the points
       totals[last.name] = Math.max(0, (totals[last.name] || 0) - last.points);
-      const idx = chores.findIndex(c => c.id === last.choreId);
-      if (idx >= 0) {
-        chores[idx].done = false;
-        chores[idx].who = null;
-      }
+      // Decrement daily count
+      const prev = dailyCounts[last.choreId] || 0;
+      dailyCounts[last.choreId] = Math.max(0, prev - 1);
+      // Clear lastWho if none left
+      if (dailyCounts[last.choreId] === 0) delete dailyLastWho[last.choreId];
+
       persist();
       renderScoreboard();
       renderChores();
     });
 
-    // Click handler for DONE buttons
+    // DONE buttons (multiple claims allowed)
     tbody.addEventListener('click', (e) => {
       const doneBtn = e.target.closest('button[data-action="done"]');
       if (!doneBtn) return;
@@ -96,24 +91,20 @@
       const select = row.querySelector('select');
       const selected = select.value;
 
-      const chore = chores.find(c => c.id === choreId);
+      const chore = DEFAULT_CHORES.find(c => c.id === choreId);
       if (!chore) return;
 
-      if (!selected) {
-        alert('Select a name first.');
-        return;
-      }
-      if (chore.done) return; // already done
+      if (!selected) { alert('Select a name first.'); return; }
 
-      // Award points
+      // Award points + record claim
       totals[selected] = (totals[selected] || 0) + chore.points;
-      chore.done = true;
-      chore.who = selected;
-      history.push({ choreId: chore.id, name: selected, points: chore.points, ts: Date.now() });
+      dailyCounts[choreId] = (dailyCounts[choreId] || 0) + 1;
+      dailyLastWho[choreId] = selected;
+      history.push({ choreId, name: selected, points: chore.points, ts: Date.now() });
 
       persist();
       renderScoreboard();
-      renderChoreRow(row, chore); // re-render this row
+      renderChoreRow(row, chore);
     });
 
     // ----- Rendering -----
@@ -126,11 +117,29 @@
 
     function renderChores() {
       tbody.innerHTML = '';
-      chores.forEach(chore => {
-        const tr = document.createElement('tr');
-        tr.dataset.id = chore.id;
-        tr.innerHTML = rowBodyCells(chore);
-        tbody.appendChild(tr);
+
+      // Group chores by type in original order
+      const order = [];
+      const groups = {};
+      DEFAULT_CHORES.forEach(c => {
+        if (!groups[c.type]) { groups[c.type] = []; order.push(c.type); }
+        groups[c.type].push(c);
+      });
+
+      order.forEach(type => {
+        // Group header row spanning existing table columns (Type, Chore, Points, Who, Action, Status) = 6
+        const header = document.createElement('tr');
+        header.className = 'group-row';
+        header.innerHTML = `<td colspan="6"><strong>${escapeHtml(type)}</strong></td>`;
+        tbody.appendChild(header);
+
+        // Rows for this type
+        groups[type].forEach(chore => {
+          const tr = document.createElement('tr');
+          tr.dataset.id = chore.id;
+          tr.innerHTML = rowBodyCells(chore);
+          tbody.appendChild(tr);
+        });
       });
     }
 
@@ -139,11 +148,14 @@
     }
 
     function rowBodyCells(chore) {
-      const select = selectHtml(KIDS, chore.who);
-      const buttonHtml = `<button class="small" data-action="done"${chore.done ? ' disabled' : ''}>DONE</button>`;
-      const status = chore.done
-        ? `<span class="status-chip done">Done by ${escapeHtml(chore.who)}</span>`
-        : `<span class="status-chip">Not done</span>`;
+      const count = dailyCounts[chore.id] || 0;
+      const last = dailyLastWho[chore.id];
+      const select = selectHtml(KIDS, ''); // always blank default; choose each time
+      const buttonHtml = `<button class="small" data-action="done">DONE</button>`;
+      const status =
+        count > 0
+          ? `<span class="status-chip done">${count} claimed today${last ? ' • last: ' + escapeHtml(last) : ''}</span>`
+          : `<span class="status-chip">Not claimed</span>`;
 
       return `
         <td>${escapeHtml(chore.type)}</td>
@@ -169,7 +181,8 @@
     // ----- Utils -----
     function persist() {
       save('totals', totals);
-      save('chores', chores);
+      save('dailyCounts', dailyCounts);
+      save('dailyLastWho', dailyLastWho);
       save('history', history);
     }
 
