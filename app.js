@@ -6,6 +6,9 @@
     // === YOUR CUSTOM CHORE LIST ===
     const DEFAULT_CHORES = [
       { id: 'hygiene-brush-teeth',        type: 'Hygiene',     name: 'Brush Teeth',            points: 1 },
+      { id: 'hygiene-brush-teeth',        type: 'Hygiene',     name: 'Shower',                 points: 1 },
+      { id: 'discipline-fighting',        type: 'Discipline',  name: 'Fighting',               points: -5 },
+      { id: 'discipline-Bedtime Delay',   type: 'Discipline',  name: 'Bedtime Delay',          points: -5 },
 
       { id: 'pets-feed-or-water-sully',   type: 'Pets',        name: 'Feed or Water Sully',    points: 1 },
       { id: 'pets-water-big-chickens',    type: 'Pets',        name: 'Water Big Chickens',     points: 3 },
@@ -20,6 +23,7 @@
       { id: 'pets-feed-indoor-cats',      type: 'Pets',        name: 'Feed Indoor Cats',       points: 1 },
 
       { id: 'house-put-away-laundry',     type: 'Household',   name: 'Put Away Laundry',       points: 2 },
+      { id: 'house-take-out-garbage',     type: 'Household',   name: 'Take Out Garbage',       points: 2 },
       { id: 'school-do-homework',         type: 'School/Sport',name: 'Do Homework',            points: 2 },
       { id: 'house-clean-room',           type: 'Household',   name: 'Clean Room',             points: 3 },
       { id: 'house-clean-theater-room',   type: 'Household',   name: 'Clean Theater Room',     points: 2 },
@@ -40,7 +44,7 @@
 
     // ----- State -----
     // Running totals (lifetime)
-    let totals = load('totals', { Eva: 0, Henry: 0, Eli: 0 });
+    let totals = load('totals', { Eva: 8, Henry: 13, Eli: 10 });
     // Per-day counters for each chore (resets on Reset Day)
     let dailyCounts = load('dailyCounts', {});          // { [choreId]: number }
     let dailyLastWho = load('dailyLastWho', {});        // { [choreId]: "Eva" }
