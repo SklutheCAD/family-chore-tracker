@@ -193,26 +193,25 @@
       renderRewardShop(); renderBalance();
     }
 
-    function renderRewardShop() {
-      rewardShopEl.innerHTML = '';
-      const rewards = window.REWARDS || [];
-      const list = rewards.filter(r => currentTier === 'All' || r.tier === currentTier);
-      if (!list.length) {
-        rewardShopEl.innerHTML = '<p class="hint">No rewards in this tier.</p>';
-        return;
-      }
-      list.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'reward-item';
-        div.innerHTML = `
-          <h4>${escapeHtml(r.name)}</h4>
-          <div class="meta">Tier: ${escapeHtml(r.tier)}</div>
-          <div class="meta">Cost: <strong>${r.cost}</strong></div>
-          <button data-id="${escapeAttr(r.id)}">Claim</button>`;
-        div.querySelector('button').addEventListener('click', () => openClaimModal(r));
-        rewardShopEl.appendChild(div);
-      });
-    }
+function renderRewardShop() {
+  rewardShopEl.innerHTML = '';
+  const rewards = window.REWARDS || [];
+  const list = rewards.filter(r => currentTier === 'All' || r.tier === currentTier);
+  if (!list.length) {
+    rewardShopEl.innerHTML = '<p class="hint">No rewards in this tier.</p>';
+    return;
+  }
+  list.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'reward-item';
+    div.innerHTML = `
+      <h4>${escapeHtml(r.name)}</h4>
+      <div class="meta">Cost: <strong>${r.cost}</strong> pts</div>
+      <button data-id="${escapeAttr(r.id)}">Claim</button>`;
+    div.querySelector('button').addEventListener('click', () => openClaimModal(r));
+    rewardShopEl.appendChild(div);
+  });
+}
 
     function renderBalance() {
       if (!balanceEl) return;
