@@ -34,6 +34,7 @@
       <span class="hint">Pick a name for a chore, then press <strong>DONE</strong>.</span>
     </section>
 
+    <!-- ========== CHORES TABLE ========== -->
     <section>
       <table class="chore-table" id="chore-table" aria-describedby="chore-help">
         <thead>
@@ -47,16 +48,16 @@
         </thead>
         <tbody id="chore-body"><!-- populated by JS --></tbody>
       </table>
-      <p id="chore-help" class="sr-only">Select a name for a chore, then press Done to award points.</p>
+      <p id="chore-help" class="sr-only">
+        Select a name for a chore, then press Done to award points.
+      </p>
     </section>
 
-    <!-- ===================== -->
-    <!-- REWARDS SHOP (NEW)   -->
-    <!-- ===================== -->
+    <!-- ========== REWARDS SECTION ========== -->
     <section class="card" id="reward-shop-section" aria-labelledby="reward-shop-title">
       <h2 id="reward-shop-title">🏆 Rewards</h2>
 
-      <div class="reward-controls">
+      <div class="reward-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:.5rem 0 1rem">
         <label for="reward-kid-select"><strong>Claiming as:</strong></label>
         <select id="reward-kid-select">
           <option value="Eva">Eva</option>
@@ -64,12 +65,12 @@
           <option value="Eli">Eli</option>
         </select>
 
-        <div id="reward-balance">
+        <div id="reward-balance" style="margin-left:auto">
           Balance: <span id="balance-points">0</span> pts
         </div>
       </div>
 
-      <div id="reward-filters">
+      <div id="reward-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin:.25rem 0 1rem">
         <button data-tier="All"  class="tier-btn active">All</button>
         <button data-tier="Mini" class="tier-btn">Mini</button>
         <button data-tier="Small" class="tier-btn">Small</button>
@@ -79,15 +80,47 @@
       </div>
 
       <div id="reward-shop" class="reward-grid"><!-- populated by JS --></div>
-      <p class="hint">Balances are a running total and don’t reset with “Reset Day”.</p>
+      <p class="hint">
+        Balances are a running total and don’t reset with “Reset Day”.
+      </p>
+    </section>
+
+    <!-- ========== CLAIMS SECTION ========== -->
+    <section class="card" id="claims-section" aria-labelledby="claims-title">
+      <h2 id="claims-title">📋 Claims</h2>
+
+      <div class="claims-controls" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:.5rem 0 1rem">
+        <label>Filter:
+          <select id="claims-filter">
+            <option value="unfulfilled">Unfulfilled</option>
+            <option value="all">All</option>
+          </select>
+        </label>
+        <button id="claims-export" class="btn">Export CSV</button>
+        <button id="claims-clear-fulfilled" class="btn danger">Clear Fulfilled</button>
+      </div>
+
+      <table class="chore-table" id="claims-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Kid</th>
+            <th>Reward</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th>Mark</th>
+          </tr>
+        </thead>
+        <tbody id="claims-body"><!-- populated by JS --></tbody>
+      </table>
     </section>
   </main>
 
   <footer class="container">
-    <small>Scores and chore status are stored locally on this device.</small>
+    <small>Scores, rewards, and claims are stored locally on this device.</small>
   </footer>
 
-  <!-- Claim Modal (NEW) -->
+  <!-- ===== CLAIM MODAL ===== -->
   <div id="claim-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="claim-title">
     <div class="modal-content">
       <h3 id="claim-title">Claim Reward</h3>
@@ -102,7 +135,7 @@
     </div>
   </div>
 
-  <!-- Load rewards BEFORE app.js so data is available -->
+  <!-- ===== SCRIPTS ===== -->
   <script src="rewards.js?v=20"></script>
   <script src="app.js?v=20" defer></script>
 
