@@ -1,4 +1,4 @@
-// rewards.js v22 — Reward catalog
+// rewards.js v23 — Reward catalog
 window.REWARDS = [
   // Mini
   { id: 'mini-screen-15',  name: '15m Extra Screen',                      cost: 15,  tier: 'Mini' },
