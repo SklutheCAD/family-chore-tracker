@@ -49,13 +49,63 @@
       </table>
       <p id="chore-help" class="sr-only">Select a name for a chore, then press Done to award points.</p>
     </section>
+
+    <!-- ===================== -->
+    <!-- REWARDS SHOP (NEW)   -->
+    <!-- ===================== -->
+    <section class="card" id="reward-shop-section" aria-labelledby="reward-shop-title">
+      <h2 id="reward-shop-title">🏆 Rewards</h2>
+
+      <div class="reward-controls">
+        <label for="reward-kid-select"><strong>Claiming as:</strong></label>
+        <select id="reward-kid-select">
+          <option value="Eva">Eva</option>
+          <option value="Henry">Henry</option>
+          <option value="Eli">Eli</option>
+        </select>
+
+        <div id="reward-balance">
+          Balance: <span id="balance-points">0</span> pts
+        </div>
+      </div>
+
+      <div id="reward-filters">
+        <button data-tier="All"  class="tier-btn active">All</button>
+        <button data-tier="Mini" class="tier-btn">Mini</button>
+        <button data-tier="Small" class="tier-btn">Small</button>
+        <button data-tier="Medium" class="tier-btn">Medium</button>
+        <button data-tier="Big" class="tier-btn">Big</button>
+        <button data-tier="Mega" class="tier-btn">Mega</button>
+      </div>
+
+      <div id="reward-shop" class="reward-grid"><!-- populated by JS --></div>
+      <p class="hint">Balances are a running total and don’t reset with “Reset Day”.</p>
+    </section>
   </main>
 
   <footer class="container">
     <small>Scores and chore status are stored locally on this device.</small>
   </footer>
 
+  <!-- Claim Modal (NEW) -->
+  <div id="claim-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="claim-title">
+    <div class="modal-content">
+      <h3 id="claim-title">Claim Reward</h3>
+      <p id="claim-desc"></p>
+      <label>Parent PIN:
+        <input id="parent-pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+      </label>
+      <div class="modal-actions">
+        <button id="claim-confirm">Confirm</button>
+        <button id="claim-cancel" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load rewards BEFORE app.js so data is available -->
+  <script src="rewards.js?v=20"></script>
   <script src="app.js?v=20" defer></script>
+
   <!-- Keep service worker disabled while testing
   <script>
     if ('serviceWorker' in navigator) {
