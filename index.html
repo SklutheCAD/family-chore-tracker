@@ -12,18 +12,9 @@
   <header class="container">
     <h1>Family Chore Tracker</h1>
     <div id="scoreboard" class="scoreboard">
-      <div class="score" data-kid="Eva">
-        <span class="name">Eva</span>
-        <span class="points" id="points-Eva">0</span>
-      </div>
-      <div class="score" data-kid="Henry">
-        <span class="name">Henry</span>
-        <span class="points" id="points-Henry">0</span>
-      </div>
-      <div class="score" data-kid="Eli">
-        <span class="name">Eli</span>
-        <span class="points" id="points-Eli">0</span>
-      </div>
+      <div class="score" data-kid="Eva"><span class="name">Eva</span><span class="points" id="points-Eva">0</span></div>
+      <div class="score" data-kid="Henry"><span class="name">Henry</span><span class="points" id="points-Henry">0</span></div>
+      <div class="score" data-kid="Eli"><span class="name">Eli</span><span class="points" id="points-Eli">0</span></div>
     </div>
   </header>
 
@@ -34,7 +25,7 @@
       <span class="hint">Pick a name for a chore, then press <strong>DONE</strong>.</span>
     </section>
 
-    <!-- ========= CHORES TABLE ========= -->
+    <!-- CHORES TABLE -->
     <section>
       <table class="chore-table" id="chore-table" aria-describedby="chore-help">
         <thead>
@@ -48,12 +39,10 @@
         </thead>
         <tbody id="chore-body"><!-- populated by JS --></tbody>
       </table>
-      <p id="chore-help" class="sr-only">
-        Select a name for a chore, then press Done to award points.
-      </p>
+      <p id="chore-help" class="sr-only">Select a name for a chore, then press Done to award points.</p>
     </section>
 
-    <!-- ========= REWARDS SECTION ========= -->
+    <!-- REWARDS -->
     <section class="card" id="reward-shop-section" aria-labelledby="reward-shop-title">
       <h2 id="reward-shop-title">🏆 Rewards</h2>
 
@@ -80,12 +69,10 @@
       </div>
 
       <div id="reward-shop" class="reward-grid"><!-- populated by JS --></div>
-      <p class="hint">
-        Balances are a running total and don’t reset with “Reset Day”.
-      </p>
+      <p class="hint">Balances are a running total and don’t reset with “Reset Day”.</p>
     </section>
 
-    <!-- ========= CLAIMS SECTION ========= -->
+    <!-- CLAIMS -->
     <section class="card" id="claims-section" aria-labelledby="claims-title">
       <h2 id="claims-title">📋 Claims</h2>
 
@@ -120,7 +107,7 @@
     <small>Scores, rewards, and claims are stored locally on this device.</small>
   </footer>
 
-  <!-- ========= CLAIM MODAL ========= -->
+  <!-- CLAIM MODAL -->
   <div id="claim-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="claim-title">
     <div class="modal-content">
       <h3 id="claim-title">Claim Reward</h3>
@@ -135,16 +122,8 @@
     </div>
   </div>
 
-  <!-- ========= SCRIPTS ========= -->
-  <script src="rewards.js?v=22"></script>
-  <script src="app.js?v=22" defer></script>
-
-  <!-- Keep service worker disabled while testing
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js');
-    }
-  </script>
-  -->
+  <!-- SCRIPTS -->
+  <script src="rewards.js?v=23"></script>
+  <script src="app.js?v=23" defer></script>
 </body>
 </html>
