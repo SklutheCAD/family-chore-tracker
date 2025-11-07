@@ -45,7 +45,7 @@
 
     // ----- State -----
     // Running totals (lifetime)
-    let totals = load('totals', { Eva: 8, Henry: 13, Eli: 10 });
+    let totals = load('totals', { Eva: 14, Henry: 29, Eli: 13 });
     // Per-day counters for each chore (resets on Reset Day)
     let dailyCounts = load('dailyCounts', {});          // { [choreId]: number }
     let dailyLastWho = load('dailyLastWho', {});        // { [choreId]: "Eva" }
