@@ -1,7 +1,10 @@
 // Family Chore Tracker – grouped by Type; multiple claims per day; running totals kept
+// + Rewards Shop with PIN approval
+// + Claims tracker with fulfilled/unfulfilled, CSV export
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
     const KIDS = ['Eva', 'Henry', 'Eli'];
+    const PARENT_PIN = '1234'; // <-- change this to your parent PIN
 
     // === YOUR CUSTOM CHORE LIST ===
     const DEFAULT_CHORES = [
@@ -21,7 +24,7 @@
       { id: 'pets-gather-eggs',           type: 'Pets',        name: 'Gather the Eggs',        points: 1 },
       { id: 'pets-feed-outdoor-cats',     type: 'Pets',        name: 'Feed Outdoor Cats',      points: 1 },
       { id: 'pets-feed-indoor-cats',      type: 'Pets',        name: 'Feed Indoor Cats',       points: 1 },
-      { id: 'pets-clean-litterbox',      type: 'Pets',        name: 'Clean litterbox',       points: 3 },
+      { id: 'pets-clean-litterbox',       type: 'Pets',        name: 'Clean litterbox',        points: 3 },
 
       { id: 'house-put-away-laundry',     type: 'Household',   name: 'Put Away Laundry',       points: 2 },
       { id: 'house-take-out-garbage',     type: 'Household',   name: 'Take Out Garbage',       points: 2 },
@@ -44,22 +47,65 @@
     }
 
     // ----- State -----
-    // Running totals (lifetime)
+    // Running totals (lifetime). Feel free to change initial values to {Eva:0, Henry:0, Eli:0}.
     let totals = load('totals', { Eva: 14, Henry: 29, Eli: 13 });
+
     // Per-day counters for each chore (resets on Reset Day)
     let dailyCounts = load('dailyCounts', {});          // { [choreId]: number }
     let dailyLastWho = load('dailyLastWho', {});        // { [choreId]: "Eva" }
-    // History for undo
+
+    // History for undo (chore actions only)
     let history = load('history', []);                  // [{ choreId, name, points, ts }]
 
-    // Elements
+    // Reward claims log (track fulfilled/unfulfilled)
+    let claims = load('claims', []);
+    // normalize old entries to ensure id & fulfilled exist
+    claims = claims.map(c => ({
+      id: c.id || (c.ts ? String(c.ts) : Math.random().toString(36).slice(2)),
+      rewardId: c.rewardId,
+      rewardName: c.rewardName || c.rewardId,
+      name: c.name,
+      cost: c.cost,
+      ts: c.ts || Date.now(),
+      fulfilled: typeof c.fulfilled === 'boolean' ? c.fulfilled : false
+    }));
+    save('claims', claims);
+
+    // ----- Elements -----
     const tbody = document.getElementById('chore-body');
     const resetBtn = document.getElementById('reset-day');
     const undoBtn = document.getElementById('undo-last');
 
-    // Initial render
+    // Rewards DOM
+    const rewardShopEl   = document.getElementById('reward-shop');
+    const balanceEl      = document.getElementById('balance-points');
+    const tierBtns       = Array.from(document.querySelectorAll('#reward-filters .tier-btn'));
+    const rewardKidSel   = document.getElementById('reward-kid-select');
+
+    // Claim Modal DOM
+    const modal          = document.getElementById('claim-modal');
+    const claimTitleEl   = document.getElementById('claim-title');
+    const claimDescEl    = document.getElementById('claim-desc');
+    const pinInput       = document.getElementById('parent-pin-input');
+    const claimConfirm   = document.getElementById('claim-confirm');
+    const claimCancel    = document.getElementById('claim-cancel');
+
+    // Claims table DOM
+    const claimsBody = document.getElementById('claims-body');
+    const claimsFilter = document.getElementById('claims-filter');
+    const claimsExportBtn = document.getElementById('claims-export');
+    const claimsClearFulfilledBtn = document.getElementById('claims-clear-fulfilled');
+
+    // ----- Rewards context -----
+    window.currentKidId = (rewardKidSel && rewardKidSel.value) || 'Eva';
+    let currentTier = 'All';
+    let pendingReward = null;
+
+    // ----- Initial render -----
     renderScoreboard();
     renderChores();
+    initRewards();   // safe even if Rewards DOM is missing
+    renderClaims();  // safe even if Claims DOM is missing
 
     // ----- Events -----
     resetBtn.addEventListener('click', () => {
@@ -69,6 +115,7 @@
       history = [];
       persist();
       renderChores();
+      // no change to totals or claims
     });
 
     undoBtn.addEventListener('click', () => {
@@ -85,6 +132,7 @@
       persist();
       renderScoreboard();
       renderChores();
+      renderBalance(); // refresh rewards balance if visible
     });
 
     // DONE buttons (multiple claims allowed)
@@ -110,9 +158,10 @@
       persist();
       renderScoreboard();
       renderChoreRow(row, chore);
+      renderBalance(); // keep rewards balance live
     });
 
-    // ----- Rendering -----
+    // ===== Rendering =====
     function renderScoreboard() {
       KIDS.forEach(kid => {
         const el = document.getElementById('points-' + kid);
@@ -155,7 +204,7 @@
     function rowBodyCells(chore) {
       const count = dailyCounts[chore.id] || 0;
       const last = dailyLastWho[chore.id];
-      const select = selectHtml(KIDS, ''); // always blank default; choose each time
+      const select = selectHtml(KIDS, ''); // blank default; choose each time
       const buttonHtml = `<button class="small" data-action="done">DONE</button>`;
       const status =
         count > 0
@@ -183,24 +232,41 @@
       return `<select data-role="picker">${opts}</select>`;
     }
 
-    // ----- Utils -----
-    function persist() {
-      save('totals', totals);
-      save('dailyCounts', dailyCounts);
-      save('dailyLastWho', dailyLastWho);
-      save('history', history);
+    // ===== Rewards =====
+    function initRewards() {
+      if (!rewardShopEl) return; // in case old index without rewards
+
+      // Filters
+      tierBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tierBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentTier = btn.dataset.tier || 'All';
+          renderRewardShop();
+        });
+      });
+
+      // Kid selection for claiming context
+      if (rewardKidSel) {
+        rewardKidSel.addEventListener('change', () => {
+          window.currentKidId = rewardKidSel.value;
+          renderBalance();
+        });
+      }
+
+      // Modal handlers
+      if (claimCancel) claimCancel.addEventListener('click', closeClaimModal);
+      if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeClaimModal(); });
+      if (claimConfirm) claimConfirm.addEventListener('click', confirmClaim);
+
+      renderRewardShop();
+      renderBalance();
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-    function escapeAttr(str) {
-      return escapeHtml(str).replace(/"/g, '&quot;');
-    }
-  });
-})();
+    function renderRewardShop() {
+      rewardShopEl.innerHTML = '';
+      const rewards = (window.REWARDS || []);
+      rewards
+        .filter(r => currentTier === 'All' || r.tier === currentTier)
+        .forEach(r => {
+          const card = document.createElement('div');
